@@ -22,21 +22,26 @@ import org.springframework.integration.ip.tcp.connection.TcpConnection;
 import org.springframework.integration.ip.tcp.connection.TcpListener;
 import org.springframework.integration.ip.tcp.connection.TcpMessageMapper;
 import org.springframework.integration.ip.tcp.connection.TcpSender;
-import org.vertx.java.core.http.ServerWebSocket;
+import org.vertx.java.core.buffer.Buffer;
+import org.vertx.java.core.sockjs.SockJSSocket;
 
 /**
  * @author Gary Russell
  * 
  */
-public class WebSocketConnection implements TcpConnection {
+public class SocketJSConnection implements TcpConnection {
 
 	private final String id;
 
-	private final ServerWebSocket socket;
+	private final SockJSSocket socket;
 
 	private final TcpListener listener;
 
-	public WebSocketConnection(String id, ServerWebSocket socket,
+	private volatile String hostName = "unknown";
+
+	private volatile String hostAddress = "unknown";
+
+	public SocketJSConnection(String id, SockJSSocket socket,
 			TcpListener listener) {
 		this.id = id;
 		this.socket = socket;
@@ -63,12 +68,12 @@ public class WebSocketConnection implements TcpConnection {
 
 	@Override
 	public String getHostAddress() {
-		return "unkown";
+		return hostName;
 	}
 
 	@Override
 	public String getHostName() {
-		return "unknown";
+		return hostAddress;
 	}
 
 	@Override
@@ -121,7 +126,7 @@ public class WebSocketConnection implements TcpConnection {
 
 	@Override
 	public void send(Message<?> message) throws Exception {
-		this.socket.writeTextFrame((String) message.getPayload());
+		this.socket.write((Buffer) message.getPayload());
 	}
 
 	@Override

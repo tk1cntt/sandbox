@@ -31,25 +31,25 @@ import org.springframework.integration.support.MessageBuilder;
 
 /**
  * @author Gary Russell
- *
+ * 
  */
 public class DemoService {
 
 	private static final Log logger = LogFactory.getLog(DemoService.class);
 
-	private final Map<String, AtomicInteger> clients = new HashMap<>();
+	private final Map<String, AtomicInteger> clients = new HashMap<String, AtomicInteger>();
 
-	private final Map<String, AtomicInteger> paused = new HashMap<>();
+	private final Map<String, AtomicInteger> paused = new HashMap<String, AtomicInteger>();
 
-	public void startStop(String command, @Header(IpHeaders.CONNECTION_ID) String connectionId) {
+	public void startStop(String command,
+			@Header(IpHeaders.CONNECTION_ID) String connectionId) {
 		if ("stop".equalsIgnoreCase(command)) {
 			AtomicInteger clientInt = clients.remove(connectionId);
 			if (clientInt != null) {
 				paused.put(connectionId, clientInt);
 			}
 			logger.info("Connection " + connectionId + " stopped");
-		}
-		else if ("start".equalsIgnoreCase(command)) {
+		} else if ("start".equalsIgnoreCase(command)) {
 			AtomicInteger clientInt = paused.remove(connectionId);
 			clientInt = clientInt == null ? new AtomicInteger() : clientInt;
 			clients.put(connectionId, clientInt);
@@ -58,13 +58,15 @@ public class DemoService {
 	}
 
 	public List<Message<?>> getNext() {
-		List<Message<?>> messages = new ArrayList<>();
+		List<Message<?>> messages = new ArrayList<Message<?>>();
 		for (Entry<String, AtomicInteger> entry : clients.entrySet()) {
-			Message<String> message = MessageBuilder.withPayload(Integer.toString(entry.getValue().incrementAndGet()))
-					.setHeader(IpHeaders.CONNECTION_ID, entry.getKey())
-					.build();
+			Message<String> message = MessageBuilder
+					.withPayload(
+							Integer.toString(entry.getValue().incrementAndGet()))
+					.setHeader(IpHeaders.CONNECTION_ID, entry.getKey()).build();
 			messages.add(message);
-			logger.info("Sending " + message.getPayload() + " to connection " + entry.getKey());
+			logger.info("Sending " + message.getPayload() + " to connection "
+					+ entry.getKey());
 		}
 		return messages;
 	}

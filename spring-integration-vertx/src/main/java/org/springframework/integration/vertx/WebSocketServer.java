@@ -24,6 +24,7 @@ import org.springframework.integration.ip.tcp.connection.TcpListener;
 import org.springframework.integration.support.MessageBuilder;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.VertxFactory;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpServer;
 import org.vertx.java.core.http.HttpServerRequest;
@@ -31,12 +32,16 @@ import org.vertx.java.core.http.ServerWebSocket;
 
 /**
  * @author Gary Russell
- *
+ * 
  */
-public class WebSocketServer extends AbstractServerConnectionFactory implements SmartLifecycle {
+public class WebSocketServer extends AbstractServerConnectionFactory implements
+		SmartLifecycle {
 
-	public WebSocketServer(int port) {
+	private String path = "/content";
+
+	public WebSocketServer(int port, String path) {
 		super(port);
+		this.path = path;
 	}
 
 	private HttpServer server;
@@ -47,23 +52,26 @@ public class WebSocketServer extends AbstractServerConnectionFactory implements 
 		if (this.running) {
 			return;
 		}
-		this.server = Vertx.newVertx().createHttpServer()
+		Vertx vertx = VertxFactory.newVertx();
+		this.server = vertx.createHttpServer()
 				.websocketHandler(new Handler<ServerWebSocket>() {
 					public void handle(final ServerWebSocket ws) {
 						final String correlationId = UUID.randomUUID()
 								.toString();
-						final TcpListener listener = WebSocketServer.this.getListener();
+						final TcpListener listener = WebSocketServer.this
+								.getListener();
 						WebSocketConnection connection = new WebSocketConnection(
 								correlationId, ws, listener);
-						WebSocketServer.this.getSender().addNewConnection(connection);
-						if (ws.path.equals("/myapp")) {
+						WebSocketServer.this.getSender().addNewConnection(
+								connection);
+						if (ws.path().equals(path)) {
 							ws.dataHandler(new Handler<Buffer>() {
 								public void handle(Buffer data) {
 									listener.onMessage(MessageBuilder
 											.withPayload(data.toString())
 											.setCorrelationId(correlationId)
-											.setHeader(IpHeaders.CONNECTION_ID, correlationId)
-											.build());
+											.setHeader(IpHeaders.CONNECTION_ID,
+													correlationId).build());
 								}
 							});
 						} else {
@@ -72,8 +80,10 @@ public class WebSocketServer extends AbstractServerConnectionFactory implements 
 					}
 				}).requestHandler(new Handler<HttpServerRequest>() {
 					public void handle(HttpServerRequest req) {
-						if (req.path.equals("/"))
-							req.response.sendFile("ws.html"); // Serve the html
+						if (req.path().equals("/"))
+							// Serve the html
+							// req.response().sendFile("ws.html");
+							req.response().end("Resoure not found");
 					}
 				}).listen(this.getPort());
 		this.running = true;

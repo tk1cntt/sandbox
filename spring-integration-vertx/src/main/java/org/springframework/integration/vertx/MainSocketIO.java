@@ -22,11 +22,11 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
  * @author Gary Russell
  * 
  */
-public class Main {
+public class MainSocketIO {
 
 	public static void main(String[] args) throws Exception {
 		AbstractApplicationContext ctx = new ClassPathXmlApplicationContext(
-				"META-INF/spring/integration/ws-context.xml");
+				"META-INF/spring/integration/socketio-context.xml");
 		System.out.println("Hit enter to terminate...");
 		System.in.read();
 		ctx.close();

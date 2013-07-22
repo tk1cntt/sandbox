@@ -9,7 +9,7 @@
 
 
 	<bean id="connectionFactory" class="org.springframework.integration.vertx.WebSocketServer">
-		<constructor-arg value="3030" />
+		<constructor-arg value=4040" />
 	</bean>
 
 	<bean id="service" class="org.springframework.integration.vertx.DemoService" />
